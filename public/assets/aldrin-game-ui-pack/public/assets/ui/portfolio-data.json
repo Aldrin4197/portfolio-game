@@ -1,0 +1,150 @@
+{
+  "about": {
+    "name": "Aldrin Jay B. Delos Reyes",
+    "tagline": "Developer. Engineer. Curious human.",
+    "description": "Welcome to my world. Explore the work, tools and milestones behind it.",
+    "photo": "aldrin-photo.png"
+  },
+  "tools": [
+    {
+      "id": "javascript",
+      "title": "JavaScript",
+      "category": "Language",
+      "icon": "javascript",
+      "description": "Interactive interfaces and the behavior behind this game world."
+    },
+    {
+      "id": "vue",
+      "title": "Vue",
+      "category": "Frontend",
+      "icon": "vue",
+      "description": "Components and state for web interfaces."
+    },
+    {
+      "id": "laravel",
+      "title": "Laravel",
+      "category": "Backend",
+      "icon": "laravel",
+      "description": "Web applications, data workflows and resource planning."
+    },
+    {
+      "id": "flutter",
+      "title": "Flutter",
+      "category": "Mobile",
+      "icon": "flutter",
+      "description": "Mobile app interfaces and cross-platform development."
+    },
+    {
+      "id": "git",
+      "title": "Git",
+      "category": "Workflow",
+      "icon": "git",
+      "description": "Version control and a record of how a project evolves."
+    },
+    {
+      "id": "sql",
+      "title": "SQL",
+      "category": "Data",
+      "icon": "sql",
+      "description": "Structured data, queries and application records."
+    }
+  ],
+  "projects": [
+    {
+      "id": "aadi",
+      "title": "Aadi",
+      "category": "Mobile",
+      "subtitle": "Rental marketplace",
+      "mark": "A",
+      "description": "Space rentals, utility vehicles and local services together in a mobile marketplace.",
+      "tags": [
+        "Flutter",
+        "Mobile"
+      ]
+    },
+    {
+      "id": "ict-planning",
+      "title": "ICT planning",
+      "category": "Web",
+      "subtitle": "Resource planning",
+      "mark": "ICT",
+      "description": "Resource requirements, delivery tracking and gap analysis brought into one planning workflow.",
+      "tags": [
+        "Laravel",
+        "SQL"
+      ]
+    },
+    {
+      "id": "pixel-world",
+      "title": "This pixel world",
+      "category": "Interactive",
+      "subtitle": "Game portfolio",
+      "mark": "<>",
+      "description": "A portfolio explored through movement, jumping and objects that reveal the work behind them.",
+      "tags": [
+        "Vue",
+        "JavaScript"
+      ]
+    }
+  ],
+  "experience": [
+    {
+      "id": "aadi-work",
+      "title": "Aadi",
+      "category": "Project work",
+      "subtitle": "Mobile application",
+      "description": "Development of a rental marketplace for spaces, utility vehicles and local services.",
+      "tags": [
+        "Flutter"
+      ]
+    },
+    {
+      "id": "planning-work",
+      "title": "ICT planning",
+      "category": "Project work",
+      "subtitle": "University systems",
+      "description": "Planning workflows for ICT requirements, delivered resources and remaining gaps.",
+      "tags": [
+        "Laravel",
+        "SQL"
+      ]
+    },
+    {
+      "id": "portfolio-work",
+      "title": "Interactive portfolio",
+      "category": "Project work",
+      "subtitle": "This pixel world",
+      "description": "Building a game-inspired way to explore projects, tools and milestones.",
+      "tags": [
+        "Vue",
+        "JavaScript"
+      ]
+    }
+  ],
+  "achievements": [
+    {
+      "id": "cs50x",
+      "title": "CS50x",
+      "category": "Coursework",
+      "subtitle": "2023",
+      "icon": "bronze",
+      "description": "Harvard University’s introductory computer science course."
+    },
+    {
+      "id": "electronics",
+      "title": "BS Electronics Engineering",
+      "category": "Education",
+      "subtitle": "2014–2019",
+      "icon": "silver",
+      "description": "Samar State University"
+    },
+    {
+      "id": "secondary",
+      "title": "Secondary education",
+      "category": "Education",
+      "subtitle": "2010–2014",
+      "icon": "gold",
+      "description": "Samar National School"
+    }
+  ]
+}

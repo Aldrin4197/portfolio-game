@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "designSize": {
+    "w": 384,
+    "h": 256
+  },
+  "sections": [
+    {
+      "id": "about",
+      "image": "about.png",
+      "atlas": "about.json"
+    },
+    {
+      "id": "experience",
+      "image": "experience.png",
+      "atlas": "experience.json"
+    },
+    {
+      "id": "achievements",
+      "image": "achievements.png",
+      "atlas": "achievements.json"
+    },
+    {
+      "id": "tools",
+      "image": "tools.png",
+      "atlas": "tools.json"
+    },
+    {
+      "id": "contact",
+      "image": "contact.png",
+      "atlas": "contact.json"
+    }
+  ],
+  "photo": "aldrin-photo.png",
+  "iconAtlases": [
+    {
+      "id": "medals",
+      "image": "medals.png",
+      "atlas": "medals.json"
+    },
+    {
+      "id": "tech-stack",
+      "image": "tech-stack.png",
+      "atlas": "tech-stack.json"
+    }
+  ],
+  "data": "portfolio-data.json",
+  "scalableLayout": {
+    "projects": "tools",
+    "about": "about",
+    "experience": "about",
+    "achievements": "achievements",
+    "tools": "tools",
+    "contact": "about"
+  }
+}
