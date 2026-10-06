@@ -1,4 +1,5 @@
 import kaplay from "kaplay";
+import type { SoundEffect } from "./audio";
 import {
   CHARACTER_ANCHOR_X,
   CHARACTER_ANCHOR_Y,
@@ -10,8 +11,7 @@ import {
   characterFrameIndex,
   type SpriteKey,
 } from "./character";
-export const GAME_WIDTH = 1920;
-export const GAME_HEIGHT = 1080;
+const WORLD_HEIGHT = 420;
 export type Theme = "light" | "dark";
 export const stops = [
   {
@@ -267,6 +267,7 @@ export function createWorld(
   host: HTMLElement,
   onNearby: (index: number) => void,
   initialTheme: Theme = "dark",
+  onSound: (effect: SoundEffect) => void = () => {},
 ) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute(
@@ -277,9 +278,8 @@ export function createWorld(
   host.append(canvas);
   const k = kaplay({
     canvas,
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
-    stretch: false,
+    // Let KAPLAY resize its drawing buffer with the host. The camera reveals
+    // more world on wide screens instead of stretching sprites or letterboxing.
     global: false,
     background: palettes[initialTheme].sky,
     crisp: true,
@@ -313,6 +313,7 @@ export function createWorld(
     if (!paused && grounded) {
       jumpVelocity = -285;
       grounded = false;
+      onSound("jump");
     }
   };
   const clear = () => {
@@ -427,6 +428,7 @@ export function createWorld(
     playerX = Math.max(100, Math.min(3530, playerX + direction * 195 * dt));
     walking = Math.abs(before - playerX) > 0.001;
     if (walking) facing = direction > 0 ? 1 : -1;
+    const wasGrounded = grounded;
     const lastFeet = 332 + jumpY;
     jumpVelocity += 780 * dt;
     let nextFeet = lastFeet + jumpVelocity * dt;
@@ -446,15 +448,20 @@ export function createWorld(
         }
     }
     jumpY = Math.min(0, nextFeet - 332);
+    if (grounded && !wasGrounded) onSound("land");
     publish();
   });
   k.onDraw(() => {
     const pal = palettes[theme];
     const night = theme === "dark";
     const t = k.time();
-    const scale = GAME_HEIGHT / 420;
+    // Portrait keeps a useful horizontal field of view; extra height becomes
+    // sky above the scene. The ground stays at the same relative screen height.
+    const scale = Math.min(k.height() / WORLD_HEIGHT, k.width() / 480);
+    const verticalOffset = k.height() * (332 / WORLD_HEIGHT) - 332 * scale;
     const w = k.width() / scale;
     k.pushTransform();
+    k.pushTranslate(0, verticalOffset);
     k.pushScale(scale);
     const camera = playerX - w * 0.38;
     const depth = reduced ? 0 : camera;
@@ -517,7 +524,7 @@ export function createWorld(
     box(0, 300, w, 120, pal.groundBack);
     box(0, 331, w, 9, pal.grassLine);
     box(0, 340, w, 18, pal.soilMid);
-    box(0, 358, w, 62, pal.soilDeep);
+    box(0, 358, w, Math.max(62, (k.height() - verticalOffset) / scale - 358), pal.soilDeep);
     for (let i = -1; i < Math.ceil(w / 32) + 2; i++) {
       const x = i * 32 - (camera % 32);
       box(
@@ -715,7 +722,7 @@ export function createWorld(
     });
     k.popTransform();
     // Ambient color wash ties the whole scene to the current time of day.
-    box(0, 0, w, 420, pal.ambient, pal.ambientOpacity);
+    box(0, -verticalOffset / scale, w, k.height() / scale, pal.ambient, pal.ambientOpacity);
     k.popTransform();
   });
 
@@ -783,4 +790,3 @@ export function createWorld(
   };
 }
 export type WorldController = ReturnType<typeof createWorld>;
-
