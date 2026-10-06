@@ -329,13 +329,14 @@ kbd {
 .game-dialog .poster-link { left: 46.354%; top: 78.5%; width: 35.417%; height: 6.5%; display: grid; place-items: center; color: #203e37; font-weight: 600; text-decoration: none; font-size: clamp(11px, 1.6cqw, 18px); }
 .inventory { background-image: url('/assets/ui/tools.png'); }
 .inventory-title { left: 14.85%; top: 15.7%; width: 69.5%; height: 7%; color: #ebd6a1; }
-.game-dialog .inventory-slot { top: 32.8%; left: 11.72%; width: 11.2%; height: 15.63%; min-height: 0; border: 0; background: transparent; padding: 0; box-shadow: none; display: grid; place-items: center; overflow: visible; color: #c9e6d4; }
+.game-dialog .inventory-slot { top: 32.8%; left: 11.72%; width: 11.2%; height: 15.63%; min-height: 0; border: 0; background: transparent; padding: 0; box-shadow: none; display: grid; grid-template-rows: minmax(0, 1fr) 2.6em; gap: 2px; overflow: visible; color: #c9e6d4; font-size: clamp(9px, 1.1cqw, 12px); }
 .inventory-slot-1, .inventory-slot-4 { left: 28.91% !important; }
 .inventory-slot-2, .inventory-slot-5 { left: 46.09% !important; }
 .inventory-slot-3, .inventory-slot-4, .inventory-slot-5 { top: 56.64% !important; }
-.inventory-slot > span:last-child { position: absolute; top: 104%; width: 150%; font-size: clamp(9px, 1.3cqw, 14px); line-height: 1.2; text-align: center; }
-.png-icon { display: block; width: 64px; height: 64px; max-width: 80%; aspect-ratio: 1; background-image: url('/assets/ui/tech-stack.png'); background-size: 300% 200%; background-repeat: no-repeat; image-rendering: pixelated; flex-shrink: 0; }
-.inventory-slot .png-icon { width: 80%; height: auto; }
+.inventory-slot-art { width: 100%; height: 100%; min-height: 0; display: grid; place-items: center; container-type: size; }
+.inventory-slot-label { width: 100%; min-width: 0; align-self: center; font-size: inherit; line-height: 1.3; text-align: center; overflow-wrap: anywhere; text-wrap: balance; }
+.png-icon { display: block; width: 64px; height: 64px; max-width: 80%; aspect-ratio: 1; background-image: url('/assets/ui/tech-stack-v2.png'); background-size: 400% 400%; background-repeat: no-repeat; image-rendering: pixelated; flex-shrink: 0; }
+.inventory-slot .png-icon { width: min(64px, 95cqw, 95cqh); height: min(64px, 95cqw, 95cqh); max-width: none; }
 .tool-monogram { font: 600 clamp(15px, 3cqw, 30px)/1.2 'IBM Plex Mono', monospace; color: #a6d7c6; }
 .inventory-detail { left: 65.1%; top: 31%; width: 24.4%; height: 45.9%; padding: 5px; }
 .inventory-detail .png-icon { margin-bottom: 8px; }
@@ -437,7 +438,7 @@ kbd {
   .interact kbd, .instructions { display: none; }
 }
 /* Small viewports reflow the PNG-framed objects, so readable text never shrinks
-   with the letterboxed world. No horizontal scrolling is needed. */
+   with the game world. No horizontal scrolling is needed. */
 @media (max-width: 700px), (max-height: 520px) {
   .game-dialog { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); }
   .panel-top { width: 100%; align-items: start; }
@@ -451,13 +452,6 @@ kbd {
   .game-dialog .poster-photo { width: 160px; justify-self: center; border: 5px solid #375c51; }
   .poster-body { padding: 0; }
   .game-dialog .poster-link { min-height: 44px; background: #a3c8ab; padding: 12px; font-size: 14px; }
-  .game-dialog .inventory { border-image-source: url('/assets/ui/tools.png'); background-color: #19323b; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 12px; }
-  .game-dialog .inventory-title { grid-column: 1 / -1; color: #efdcae !important; }
-  .game-dialog .inventory-slot { width: 100%; aspect-ratio: 1; border: 8px solid transparent; border-image: url('/assets/ui/tools.png') 32 / 8px / 0 stretch; background: #142930; padding: 5px; min-height: 64px; }
-  .inventory-slot > span:last-child { position: static; width: 100%; font-size: 10px; }
-  .inventory-slot .png-icon { width: 44px; height: 44px; }
-  .game-dialog .inventory-detail { grid-column: 1 / -1; padding: 16px; background: #ead9ad; }
-  .game-dialog .inventory-note { grid-column: 1 / -1; font-size: 12px !important; }
   .tool-monogram { font-size: 22px; }
   .game-dialog .journal { grid-template-columns: 1fr 1fr; border-image-source: url('/assets/ui/experience.png'); }
   .journal-title, .journal-entries, .journal-detail { grid-column: 1 / -1; }
@@ -613,4 +607,21 @@ html { -webkit-text-size-adjust: 100%; }
   .game-menu { top: max(64px, calc(env(safe-area-inset-top, 0px) + 54px)); right: max(14px, env(safe-area-inset-right, 0px)); }
   .touch-game .game-menu { top: max(50px, calc(env(safe-area-inset-top, 0px) + 42px)); }
   .game-menu .fullscreen, .sound-label { display: none; }
+}
+
+/* Keep captions in their own row, outside the PNG slot border, when the full
+   inventory artwork would make its small slots too cramped. */
+@media (max-width: 700px), (max-height: 800px) {
+  .game-dialog .inventory { width: 100%; aspect-ratio: auto; min-height: 0; padding: 16px; border: 24px solid transparent; border-image: url('/assets/ui/tools.png') 32 / 24px / 0 stretch; background-image: none; background-color: #19323b; background-clip: padding-box; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 12px; }
+  .game-dialog .inventory-title, .game-dialog .inventory-detail, .game-dialog .inventory-note { position: static; grid-column: 1 / -1; width: auto; height: auto; }
+  .game-dialog h2.inventory-title { color: #efdcae; font-size: 25px; }
+  .game-dialog .inventory-slot { position: static; width: 100%; height: auto; aspect-ratio: auto; border: 0; background: transparent; padding: 0; min-height: 0; grid-template-rows: auto minmax(2.6em, auto); gap: 8px; font-size: 12px; align-self: start; }
+  .inventory-slot-art { height: auto; aspect-ratio: 1; border: 8px solid transparent; border-image: url('/assets/ui/tools.png') 32 / 8px / 0 stretch; background: #142930; background-clip: padding-box; }
+  .inventory-slot-label { align-self: start; }
+  .inventory-slot .png-icon { width: min(64px, 90cqw, 90cqh); height: min(64px, 90cqw, 90cqh); }
+  .game-dialog .inventory-detail { padding: 16px; background: #ead9ad; font-size: 14px; }
+  .game-dialog .inventory-note { font-size: 12px !important; margin: 0; }
+}
+@media (max-width: 420px) {
+  .game-dialog .inventory { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
