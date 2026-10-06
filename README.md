@@ -1,6 +1,6 @@
 # Aldrin’s World
 
-A standalone 2D pixel game portfolio built with Vue 3, TypeScript, Vite, and KAPLAY. The game renders at **1920 × 1080** and scales uniformly to the browser. Non-16:9 screens are letterboxed. The portfolio lives in in-game panels; there is no separate website layout or scroll-driven movement.
+A standalone 2D pixel game portfolio built with Vue 3, TypeScript, Vite, and KAPLAY. The game fills the available browser viewport, including **1920 × 1080**, without letterboxing. Pixel art scales uniformly; wider screens reveal more scenery. Portrait screens show extra sky while keeping the character and ground visible. The portfolio lives in in-game panels; there is no separate website layout or scroll-driven movement.
 
 ## Run
 
@@ -16,7 +16,7 @@ npm run dev
 - E: explore a nearby landmark.
 - Escape: close the current panel.
 - Map: travel to any portfolio area.
-- Touch: hold left/right buttons and tap jump.
+- Touch: drag the joystick and tap Jump with the other thumb.
 
 The game pauses while a panel is open. Keyboard state clears when the browser loses focus. Stepping stones support jumping and landing. All portfolio areas are also accessible through the map, without precise movement.
 
@@ -33,7 +33,7 @@ npm run export:preview
 ## Structure
 
 - `src/App.vue`: game HUD, input controls, in-game map, dialogs, fullscreen, and lifecycle.
-- `src/game/world.ts`: fixed game resolution, movement, gravity, platform landing, camera, and pixel rendering.
+- `src/game/world.ts`: adaptive viewport, movement, gravity, platform landing, camera, and pixel rendering.
 - `src/components/PortfolioPanel.vue`: all portfolio content and project details.
 - `src/data/`: existing portfolio content.
 - `src/index.css`: game stage, transparent interaction layer, and PNG-backed interfaces.
@@ -63,3 +63,11 @@ Touch-capable devices show a sideways-phone prompt in portrait. Rotating to land
 - Controls sit inside the device safe areas. Keyboard controls remain available, including on touch devices with a connected keyboard.
 
 The orientation prompt, pointer lifecycle, simultaneous touches, and viewport layouts can be checked in browser touch emulation. Physical iOS/Android testing is still needed for notch insets, browser chrome, and actual thumb comfort.
+
+## Sound and music
+
+Tap **Sound** in the game menu to enable an original, gentle chiptune loop and effects for jumping, landing, opening/closing panels, map travel, and UI selections. Sound starts off for new visitors and only starts after interaction. Open **? → Sound & music** for separate music/effect switches and a volume slider; preferences are remembered on this browser.
+
+Music becomes quieter while reading portfolio panels. All audio stops while the page is hidden, the window loses focus, or the rotation prompt is open; returning resumes music without replaying old effects. `src/game/audio.ts` generates the original theme and effects with Web Audio, so no external recordings, downloads, or audio dependencies are needed.
+
+Browser tests cover audio output, mute, independent switches, persistence, and focus changes. Physical iOS/Android checks are still needed for browser chrome resizing, safe-area insets, audio interruptions, and listening comfort.

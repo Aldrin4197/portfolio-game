@@ -8,6 +8,13 @@ import {
 } from "./game/world";
 import PortfolioPanel from "./components/PortfolioPanel.vue";
 import TouchControls from "./components/TouchControls.vue";
+import { createGameAudio, readAudioPreferences, type AudioPreferences } from "./game/audio";
+const audioPreferences = ref(readAudioPreferences());
+const audioMessage = ref("");
+const audio = createGameAudio(audioPreferences.value, () => {
+  audioMessage.value = "Audio could not start. Tap Sound to try again.";
+  setAudio({ enabled: false });
+});
 const coarsePointer = window.matchMedia("(any-pointer: coarse)");
 const portraitOrientation = window.matchMedia("(orientation: portrait)");
 const touchInput = ref(coarsePointer.matches);
@@ -60,6 +67,7 @@ const panelTitle = computed(() =>
       : stops[panel.value].name,
 );
 function show(value: number | "map" | "help") {
+  audio.effect("open");
   if (!modal.value?.open) {
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   }
@@ -80,11 +88,13 @@ function close() {
   modal.value?.close();
 }
 function resume() {
+  audio.effect("close");
   panelOpen.value = false;
   syncPause();
   nextTick(() => returnFocus?.focus({ preventScroll: true }));
 }
 function travel(index: number) {
+  audio.effect("travel");
   world?.travel(index);
   close();
   action.value?.focus({ preventScroll: true });
@@ -97,6 +107,23 @@ async function selectProject(slug: string | null) {
 }
 function syncPause() {
   world?.pause(inputPaused.value);
+  audio.setActive(!pageInactive.value && !needsRotation.value);
+  audio.setDucked(panelOpen.value);
+}
+function setAudio(patch: Partial<AudioPreferences>) {
+  audioPreferences.value = { ...audioPreferences.value, ...patch };
+  audio.setPreferences(audioPreferences.value);
+}
+function toggleSound() {
+  audioMessage.value = "";
+  setAudio({ enabled: !audioPreferences.value.enabled });
+}
+function unlockAudio() {
+  void audio.unlock();
+}
+function uiSound(event: MouseEvent) {
+  const control = event.target instanceof Element ? event.target.closest("button, a, select") : null;
+  if (control && !control.closest(".movement, .touch-controls, .sound-toggle, .audio-settings")) audio.effect("select");
 }
 function refreshDevice() {
   touchInput.value = coarsePointer.matches;
@@ -118,7 +145,7 @@ function visibilityChanged() {
   pageInactive.value = document.hidden;
   controlResetKey.value++;
 }
-watch(inputPaused, syncPause);
+watch([inputPaused, pageInactive, needsRotation, panelOpen], syncPause);
 watch(needsRotation, async (showPrompt) => {
   controlResetKey.value++;
   syncPause();
@@ -171,6 +198,7 @@ onMounted(() => {
           nearby.value = value;
         },
         theme.value,
+        (effect) => audio.effect(effect),
       );
   } catch (error) {
     console.error("Game could not start", error);
@@ -186,6 +214,9 @@ onMounted(() => {
   document.addEventListener("visibilitychange", visibilityChanged);
   window.addEventListener("keydown", onKey);
   document.addEventListener("fullscreenchange", updateFullscreen);
+  window.addEventListener("pointerdown", unlockAudio, true);
+  window.addEventListener("keydown", unlockAudio, true);
+  document.addEventListener("click", uiSound);
   // Existing project URLs open their content inside the game.
   const slug = decodeURIComponent(
     window.location.pathname.split("/projects/")[1] || "",
@@ -210,6 +241,10 @@ onBeforeUnmount(() => {
   document.removeEventListener("visibilitychange", visibilityChanged);
   observer?.disconnect();
   world?.destroy();
+  audio.destroy();
+  window.removeEventListener("pointerdown", unlockAudio, true);
+  window.removeEventListener("keydown", unlockAudio, true);
+  document.removeEventListener("click", uiSound);
   window.removeEventListener("keydown", onKey);
   document.removeEventListener("fullscreenchange", updateFullscreen);
 });
@@ -241,13 +276,22 @@ onBeforeUnmount(() => {
         "
       >
         {{ theme === "dark" ? "☀" : "🌙" }}</button
-      ><button class="fullscreen" @click="toggleFullscreen">
+      ><button class="sound-toggle" @click="toggleSound" :aria-pressed="audioPreferences.enabled"
+        :aria-label="audioPreferences.enabled ? 'Mute sound' : 'Enable sound'"
+        :title="audioPreferences.enabled ? 'Mute sound' : 'Enable music and sound effects'">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+          <path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor" />
+          <path v-if="audioPreferences.enabled" d="M16 8q4 4 0 8m3-11q7 7 0 14" fill="none" stroke="currentColor" stroke-width="2" />
+          <path v-else d="m16 9 6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="2" />
+        </svg><span class="sound-label">Sound {{ audioPreferences.enabled ? 'on' : 'off' }}</span>
+      </button><button class="fullscreen" @click="toggleFullscreen">
         {{ fullscreen ? "Exit fullscreen" : "Fullscreen" }}
       </button>
     </nav>
     <p v-if="fullscreenMessage" class="notice" role="status">
       {{ fullscreenMessage }}
     </p>
+    <p v-if="audioMessage && !panelOpen" class="notice" role="status">{{ audioMessage }}</p>
     <div v-if="failure" class="load-error">
       <h2>The world could not load.</h2>
       <p>You can still explore all portfolio content through the map.</p>
@@ -353,7 +397,19 @@ onBeforeUnmount(() => {
           On touch screens, turn your phone sideways. Drag the joystick left or right
           to walk, and tap Jump with your other thumb. Release the joystick to stop.
           Tap Explore near a landmark. You can also continue in portrait.
-        </p></template
+        </p>
+        <fieldset class="audio-settings">
+          <legend>Sound &amp; music</legend>
+          <button type="button" :aria-pressed="audioPreferences.enabled" @click="toggleSound">{{ audioPreferences.enabled ? 'Mute all sound' : 'Enable sound' }}</button>
+          <label><input type="checkbox" :checked="audioPreferences.music" @change="setAudio({ music: ($event.target as HTMLInputElement).checked })" /> Background music</label>
+          <label><input type="checkbox" :checked="audioPreferences.effects" @change="setAudio({ effects: ($event.target as HTMLInputElement).checked })" /> Game sound effects</label>
+          <label for="game-volume">Volume <output>{{ Math.round(audioPreferences.volume * 100) }}%</output></label>
+          <input id="game-volume" type="range" min="0" max="100" step="5" :value="audioPreferences.volume * 100"
+            @input="setAudio({ volume: Number(($event.target as HTMLInputElement).value) / 100 })" />
+          <p>Enable sound to hear the world. Your settings are remembered. Audio pauses when you leave the game.</p>
+          <p v-if="audioMessage" role="status">{{ audioMessage }}</p>
+        </fieldset>
+        </template
       >
       </div>
       <PortfolioPanel

@@ -77,8 +77,8 @@ body,
   overscroll-behavior: none;
 }
 #root {
-  display: grid;
-  place-items: center;
+  height: 100vh;
+  height: 100dvh;
 }
 button,
 a {
@@ -123,8 +123,8 @@ h2:focus {
 }
 .game-stage {
   position: relative;
-  width: min(100vw, 177.777778dvh);
-  height: min(56.25vw, 100dvh);
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   background: var(--stage-bg);
   container-type: size;
@@ -554,6 +554,7 @@ html { -webkit-text-size-adjust: 100%; }
 .touch-game .instructions { display: none; }
 .touch-game .game-menu { top: max(12px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }
 .touch-game .game-menu button { min-width: 44px; min-height: 44px; padding: 4px 8px; }
+.touch-game .sound-label { display: none; }
 .touch-game .identity { top: max(12px, env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }
 .touch-game .identity h1 { font-size: clamp(12px, 2vw, 22px); margin: 3px 0; }
 .touch-game .identity > p { display: none; }
@@ -594,4 +595,22 @@ html { -webkit-text-size-adjust: 100%; }
   .touch-control-label { display: none; }
   .touch-actions button { min-height: 64px; min-width: 64px; }
   .touch-game .location { display: none; }
+}
+.game-menu .sound-toggle { gap: 6px; }
+.sound-toggle svg { flex: 0 0 20px; }
+.audio-settings { border: 1px solid #827657; padding: 16px; margin: 22px 0 0; display: grid; gap: 12px; }
+.audio-settings legend { padding: 0 8px; color: #f4d694; }
+.audio-settings label { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.audio-settings input { accent-color: #ddb873; }
+.audio-settings input[type="checkbox"] { width: 22px; height: 22px; }
+.audio-settings input[type="range"] { width: 100%; min-height: 44px; padding: 0; }
+.audio-settings output { margin-left: auto; }
+.audio-settings p { font-size: 12px; line-height: 1.7; margin: 0; }
+@media (max-width: 1000px) {
+  .sound-label { display: none; }
+}
+@media (max-width: 600px) {
+  .game-menu { top: max(64px, calc(env(safe-area-inset-top, 0px) + 54px)); right: max(14px, env(safe-area-inset-right, 0px)); }
+  .touch-game .game-menu { top: max(50px, calc(env(safe-area-inset-top, 0px) + 42px)); }
+  .game-menu .fullscreen, .sound-label { display: none; }
 }
