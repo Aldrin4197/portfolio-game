@@ -3,7 +3,7 @@ import globals from "globals";
 import tseslint from "typescript-eslint";
 import vue from "eslint-plugin-vue";
 export default tseslint.config(
-  { ignores: ["dist/**", "docs/previews/**"] },
+  { ignores: ["dist/**", "docs/previews/**", "public/assets/aldrin-game-ui-pack/**"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs["flat/essential"],

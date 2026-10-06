@@ -8,8 +8,12 @@ All portfolio information appears in Vue dialogs inside the stage: About, Skills
 
 The code keeps rendering and physics outside Vue’s reactive render cycle. Only nearby-area changes update the HUD. A single engine instance survives viewport resizes. Reduced-motion preferences remove decorative parallax and stride animation while retaining player-controlled movement.
 
-Run `npm run export:preview` to refresh the standalone HTML preview.
+Run `npm run export:preview` to refresh the portable preview folder. Assets remain separate files.
 
-## Verified behavior
+## PNG UI integration
 
-Production build (including Vue/TypeScript checks) and ESLint pass. Browser checks verify a 1920 × 1080 canvas bitmap at desktop and smaller viewport sizes; a 16:9 stage without document overflow; no player movement from wheel input; arrow-key movement; jumping and landing on a raised platform; frozen movement while panels are open; all six destinations; project details; direct project URLs; held touch/pointer controls; and compact portrait/landscape layouts. Automated axe checks report no violations on the world view or the project panel. The exported HTML was also opened directly as a local file and exercised independently of Vite.
+The active portfolio UI uses the original PNG compositions. Its native dialog is fully transparent and borderless, so there is no secondary window around the artwork. PNG-framed controls provide section navigation, closing, search, filters, and paging. The canvas world and movement physics remain independent of the overlay.
+
+The poster, inventory, journal, noticeboard, and correspondence desk preserve their authored proportions on desktop. On narrow or short viewports, PNG borders frame content that flows normally instead of shrinking text to fit a small letterboxed stage. Project details preserve their existing content and external links.
+
+The UI imports neither the procedural atlas renderer nor the old CSS pixel renderer. Tech badges load the supplied PNG atlas; tools without authored frames use text monograms. No runtime canvas export or base64 encoding is used for these assets.

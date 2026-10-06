@@ -28,7 +28,7 @@ npm run lint
 npm run export:preview
 ```
 
-`dist/` is the deployable build. `docs/previews/playable-preview.html` is a self-contained preview that can be opened directly in a browser. Images, fonts, JavaScript, and CSS are embedded in that preview.
+`dist/` is the deployable build. `docs/previews/game/` is a portable preview folder. Run `npx vite preview --outDir docs/previews/game` to open it. PNGs, fonts, JavaScript, and CSS remain separate files; images are never embedded as base64.
 
 ## Structure
 
@@ -36,7 +36,18 @@ npm run export:preview
 - `src/game/world.ts`: fixed game resolution, movement, gravity, platform landing, camera, and pixel rendering.
 - `src/components/PortfolioPanel.vue`: all portfolio content and project details.
 - `src/data/`: existing portfolio content.
-- `src/index.css`: game stage and accessible HTML overlays.
+- `src/index.css`: game stage, transparent interaction layer, and PNG-backed interfaces.
+- `src/components/PngIcon.vue`: named frames from the original tech-stack PNG atlas.
+
+## PNG interfaces
+
+Opening a landmark displays its original poster, journal, inventory, achievement board, or contact desk directly over the dimmed game world. The native dialog provides focus trapping and Escape handling but has no visible background, border, or surrounding container. Navigation and close controls use the same PNG artwork.
+
+Tools, projects, and achievements support search, category filters, and pagination. Add entries to their existing files in `src/data/`; no repainting or fixed total-item limit is required. The original six technology sprites are loaded from `public/assets/ui/tech-stack.png`. Tools without dedicated artwork use text monograms until a matching PNG frame is added. SQL is shared by MySQL and PostgreSQL.
+
+Desktop layouts preserve each full PNG composition. Narrow screens and short landscape screens reflow content using PNG borders at readable text sizes. Opening a panel pauses gameplay; closing it returns focus and resumes movement. The contact desk prepares an email draft in the visitor’s email app.
+
+The original pack remains in `public/assets/aldrin-game-ui-pack/` as reference material; its procedural renderer is not imported by the game.
 
 Existing `/projects/:slug` URLs open the matching project inside the game. Existing section hash links open that area. `/portfolio` opens the in-game map. Apache deployment can use the existing `public/.htaccess` history fallback.
 
