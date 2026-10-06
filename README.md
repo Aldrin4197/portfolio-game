@@ -52,3 +52,14 @@ The original pack remains in `public/assets/aldrin-game-ui-pack/` as reference m
 Existing `/projects/:slug` URLs open the matching project inside the game. Existing section hash links open that area. `/portfolio` opens the in-game map. Apache deployment can use the existing `public/.htaccess` history fallback.
 
 Upload the contents of `dist/` to the hosting document root. No Node server is needed in production. The original PHP API files remain in the repository but are not required for the game.
+
+## Playing on a phone
+
+Touch-capable devices show a sideways-phone prompt in portrait. Rotating to landscape dismisses it automatically; **Continue in portrait** keeps the portfolio available without requiring rotation. No orientation permission, sensor access, or fullscreen lock is required.
+
+- Drag the left joystick to walk. A small center dead zone prevents accidental movement; dragging farther increases walking speed.
+- Tap **Jump** with the other thumb while holding the joystick. **Explore** opens the nearby landmark.
+- Releasing or cancelling the touch stops movement. Opening a panel, rotating, switching apps, or losing focus clears held input. Returning from an overlay never resumes an old drag.
+- Controls sit inside the device safe areas. Keyboard controls remain available, including on touch devices with a connected keyboard.
+
+The orientation prompt, pointer lifecycle, simultaneous touches, and viewport layouts can be checked in browser touch emulation. Physical iOS/Android testing is still needed for notch insets, browser chrome, and actual thumb comfort.

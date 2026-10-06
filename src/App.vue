@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   createWorld,
   stops,
@@ -7,6 +7,18 @@ import {
   type WorldController,
 } from "./game/world";
 import PortfolioPanel from "./components/PortfolioPanel.vue";
+import TouchControls from "./components/TouchControls.vue";
+const coarsePointer = window.matchMedia("(any-pointer: coarse)");
+const portraitOrientation = window.matchMedia("(orientation: portrait)");
+const touchInput = ref(coarsePointer.matches);
+const portrait = ref(portraitOrientation.matches);
+const portraitDismissed = ref(false);
+const rotationPrompt = ref<HTMLDialogElement>();
+const panelOpen = ref(false);
+const pageInactive = ref(document.hidden);
+const controlResetKey = ref(0);
+const needsRotation = computed(() => touchInput.value && portrait.value && !portraitDismissed.value);
+const inputPaused = computed(() => panelOpen.value || needsRotation.value || pageInactive.value);
 const stage = ref<HTMLElement>();
 const surface = ref<HTMLElement>();
 const modal = ref<HTMLDialogElement>();
@@ -32,6 +44,7 @@ function readInitialTheme(): Theme {
 }
 function applyTheme(value: Theme) {
   document.documentElement.dataset.theme = value;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", value === "dark" ? "#080f1a" : "#dcefe3");
   localStorage.setItem("theme", value);
   world?.setTheme(value);
 }
@@ -52,7 +65,8 @@ function show(value: number | "map" | "help") {
   }
   panel.value = value;
   selectedProject.value = null;
-  world?.pause(true);
+  panelOpen.value = true;
+  syncPause();
   if (!modal.value?.open) modal.value?.showModal();
   nextTick(() => {
     modal.value?.scrollTo(0, 0);
@@ -66,8 +80,9 @@ function close() {
   modal.value?.close();
 }
 function resume() {
-  world?.pause(false);
-  returnFocus?.focus({ preventScroll: true });
+  panelOpen.value = false;
+  syncPause();
+  nextTick(() => returnFocus?.focus({ preventScroll: true }));
 }
 function travel(index: number) {
   world?.travel(index);
@@ -80,6 +95,37 @@ async function selectProject(slug: string | null) {
   modal.value?.scrollTo(0, 0);
   modal.value?.querySelector<HTMLElement>("h2")?.focus();
 }
+function syncPause() {
+  world?.pause(inputPaused.value);
+}
+function refreshDevice() {
+  touchInput.value = coarsePointer.matches;
+  portrait.value = portraitOrientation.matches;
+  if (!portrait.value) portraitDismissed.value = false;
+  controlResetKey.value++;
+}
+function dismissRotation() {
+  portraitDismissed.value = true;
+}
+function blurGame() {
+  pageInactive.value = true;
+  controlResetKey.value++;
+}
+function focusGame() {
+  pageInactive.value = document.hidden;
+}
+function visibilityChanged() {
+  pageInactive.value = document.hidden;
+  controlResetKey.value++;
+}
+watch(inputPaused, syncPause);
+watch(needsRotation, async (showPrompt) => {
+  controlResetKey.value++;
+  syncPause();
+  await nextTick();
+  if (showPrompt && !rotationPrompt.value?.open) rotationPrompt.value?.showModal();
+  else if (!showPrompt && rotationPrompt.value?.open) rotationPrompt.value.close();
+});
 function move(event: PointerEvent, direction: number) {
   (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
   world?.direction(direction);
@@ -89,7 +135,7 @@ function stop() {
 }
 function onKey(event: KeyboardEvent) {
   if (
-    !modal.value?.open &&
+    !inputPaused.value &&
     event.key.toLowerCase() === "e" &&
     !event.repeat &&
     !event.ctrlKey &&
@@ -130,6 +176,14 @@ onMounted(() => {
     console.error("Game could not start", error);
     failure.value = true;
   }
+  syncPause();
+  if (needsRotation.value) nextTick(() => rotationPrompt.value?.showModal());
+  coarsePointer.addEventListener("change", refreshDevice);
+  portraitOrientation.addEventListener("change", refreshDevice);
+  window.addEventListener("orientationchange", refreshDevice);
+  window.addEventListener("blur", blurGame);
+  window.addEventListener("focus", focusGame);
+  document.addEventListener("visibilitychange", visibilityChanged);
   window.addEventListener("keydown", onKey);
   document.addEventListener("fullscreenchange", updateFullscreen);
   // Existing project URLs open their content inside the game.
@@ -148,6 +202,12 @@ onMounted(() => {
   } else if (window.location.pathname === "/portfolio") show("map");
 });
 onBeforeUnmount(() => {
+  coarsePointer.removeEventListener("change", refreshDevice);
+  portraitOrientation.removeEventListener("change", refreshDevice);
+  window.removeEventListener("orientationchange", refreshDevice);
+  window.removeEventListener("blur", blurGame);
+  window.removeEventListener("focus", focusGame);
+  document.removeEventListener("visibilitychange", visibilityChanged);
   observer?.disconnect();
   world?.destroy();
   window.removeEventListener("keydown", onKey);
@@ -159,6 +219,7 @@ onBeforeUnmount(() => {
   <main
     ref="stage"
     class="game-stage"
+    :class="{ 'touch-game': touchInput, 'inspection-open': panelOpen || needsRotation }"
     :style="{ '--stage-h': `${stageHeight}px` }"
     aria-label="Aldrin’s interactive portfolio game"
   >
@@ -196,7 +257,7 @@ onBeforeUnmount(() => {
       <small>{{ current ? `AREA ${current.number} / 06` : "EXPLORING" }}</small>
       <p aria-live="polite">{{ current?.name ?? "Follow your curiosity." }}</p>
     </div>
-    <div class="movement" aria-label="Movement controls">
+    <div v-if="!touchInput" class="movement" aria-label="Movement controls">
       <button
         aria-label="Walk left"
         @pointerdown.prevent="move($event, -1)"
@@ -220,11 +281,12 @@ onBeforeUnmount(() => {
     <p class="instructions">
       <span class="desktop"
         >← → Move <b>·</b> ↑ / Space Jump <b>·</b> E Explore</span
-      ><span class="touch">Hold ← → to walk · Tap ↑ to jump</span>
+      ><span class="touch">Drag the joystick to walk · Tap ↑ to jump</span>
     </p>
     <button
       ref="action"
       class="interact"
+      v-if="!touchInput"
       :disabled="nearby < 0"
       @click="explore"
     >
@@ -240,6 +302,10 @@ onBeforeUnmount(() => {
       }}
       ↗
     </button>
+    <Teleport to="body">
+    <TouchControls v-if="touchInput" :disabled="inputPaused" :can-explore="nearby >= 0"
+      :reset-key="controlResetKey" @move="world?.direction($event)" @jump="world?.jump()" @explore="explore" />
+    </Teleport>
     <dialog
       ref="modal"
       class="game-dialog"
@@ -284,8 +350,9 @@ onBeforeUnmount(() => {
           <dd>Travel directly to any of the six areas.</dd>
         </dl>
         <p>
-          On touch screens, hold the arrow buttons to walk and tap ↑ to jump.
-          Landscape gives you the largest view.
+          On touch screens, turn your phone sideways. Drag the joystick left or right
+          to walk, and tap Jump with your other thumb. Release the joystick to stop.
+          Tap Explore near a landmark. You can also continue in portrait.
         </p></template
       >
       </div>
@@ -295,6 +362,16 @@ onBeforeUnmount(() => {
         :project-slug="selectedProject"
         @project="selectProject"
       />
+    </dialog>
+    <dialog ref="rotationPrompt" class="rotation-dialog" aria-labelledby="rotation-heading"
+      aria-describedby="rotation-description" @cancel.prevent="dismissRotation">
+      <div class="rotation-art" aria-hidden="true">
+        <svg viewBox="0 0 120 100" focusable="false"><path d="M31 31V15h58v35M89 69v16H31V65" fill="none" stroke="currentColor" stroke-width="4"/><path d="m81 42 8 8 8-8M23 73l8-8 8 8" fill="none" stroke="currentColor" stroke-width="4"/><rect x="43" y="24" width="34" height="52" rx="4" fill="#19323b" stroke="currentColor" stroke-width="4"/><path d="M56 68h8" stroke="currentColor" stroke-width="3"/></svg>
+      </div>
+      <h2 id="rotation-heading">A little more room<br />for adventure.</h2>
+      <p id="rotation-description">Turn your phone sideways to play.</p>
+      <p class="rotation-hint">Joystick on the left.<br />Jump and Explore on the right.</p>
+      <button type="button" class="portrait-continue" @click="dismissRotation">Continue in portrait</button>
     </dialog>
   </main>
 </template>

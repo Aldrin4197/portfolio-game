@@ -752,7 +752,7 @@ export function createWorld(
   return {
     jump,
     direction(value: number) {
-      pointerDirection = value;
+      pointerDirection = paused || !Number.isFinite(value) ? 0 : Math.max(-1, Math.min(1, value));
     },
     pause(value: boolean) {
       paused = value;

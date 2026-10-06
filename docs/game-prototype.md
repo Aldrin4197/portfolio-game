@@ -17,3 +17,9 @@ The active portfolio UI uses the original PNG compositions. Its native dialog is
 The poster, inventory, journal, noticeboard, and correspondence desk preserve their authored proportions on desktop. On narrow or short viewports, PNG borders frame content that flows normally instead of shrinking text to fit a small letterboxed stage. Project details preserve their existing content and external links.
 
 The UI imports neither the procedural atlas renderer nor the old CSS pixel renderer. Tech badges load the supplied PNG atlas; tools without authored frames use text monograms. No runtime canvas export or base64 encoding is used for these assets.
+
+## Mobile controls
+
+`TouchControls.vue` owns one joystick pointer ID and captures that pointer during a drag. Jump accepts a second finger independently. Movement is normalized to -1…1 with an 18% horizontal dead zone and clamped by the world controller. Pointer cancellation, capture loss, blur, rotation, and overlay state reset the joystick.
+
+Touch capability and portrait orientation come from media queries, without user-agent detection. The rotation prompt is a native dialog above any existing portfolio panel. Dismissing it does not resume gameplay when another panel is open. The existing 1920 × 1080 canvas retains its aspect ratio; touch controls are teleported to the viewport and padded away from safe-area insets.

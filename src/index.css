@@ -501,3 +501,97 @@ kbd {
   .game-dialog .poster-body p { line-height: 1.55; }
   .game-dialog .poster-body h3 { font-size: clamp(19px, 2.25cqw, 26px); }
 }
+
+/* Mobile play controls use the viewport, leaving room for both thumbs. */
+html { -webkit-text-size-adjust: 100%; }
+.touch-controls {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  color: #e8d8af;
+}
+.touch-controls.controls-disabled { visibility: hidden; }
+.joystick-wrap {
+  position: absolute;
+  left: max(18px, env(safe-area-inset-left, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  display: grid; justify-items: center; gap: 7px;
+}
+.touch-controls button, .portrait-continue {
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  border: 12px solid transparent;
+  border-image: url('/assets/ui/tools.png') 32 / 12px / 0 stretch;
+  background: #19323b; background-clip: padding-box; color: #e8d8af;
+  box-shadow: none;
+}
+.touch-controls button { pointer-events: auto; }
+.touch-controls .joystick {
+  --pad-size: clamp(100px, 26dvh, 132px);
+  position: relative; width: var(--pad-size); height: var(--pad-size);
+  display: grid; place-items: center; padding: 0; touch-action: none;
+}
+.joystick:focus-visible { outline: 3px solid #eebb65; outline-offset: 4px; }
+.touch-controls .joystick:active { transform: none; }
+.joystick-axis { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 2px; color: #b6c7b6; font-size: 17px; pointer-events: none; }
+.joystick-thumb {
+  width: 46px; height: 46px; display: grid; place-items: center;
+  border: 8px solid transparent;
+  border-image: url('/assets/ui/tools.png') 32 / 8px / 0 stretch;
+  background: #56766b; background-clip: padding-box; color: #f1d594;
+  font-size: 22px; pointer-events: none; will-change: transform;
+}
+.joystick.is-dragging .joystick-thumb { background-color: #729987; }
+.touch-control-label { font-size: 11px; color: #f2e4c5; text-shadow: 1px 1px #13282b; }
+.touch-actions {
+  position: absolute;
+  right: max(18px, env(safe-area-inset-right, 0px));
+  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+  display: flex; align-items: end; gap: 12px;
+}
+.touch-actions button { display: grid; place-items: center; gap: 3px; padding: 5px 8px; font-size: 11px; touch-action: manipulation; min-height: 72px; min-width: 72px; }
+.touch-actions button > span:first-child { font-size: 25px; line-height: 1; }
+.touch-actions .touch-explore { min-width: 92px; }
+.touch-actions button:disabled { color: #b4beb0; opacity: .55; }
+.touch-actions button:active { transform: translateY(2px); background-color: #3f6357; }
+.touch-game .instructions { display: none; }
+.touch-game .game-menu { top: max(12px, env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); }
+.touch-game .game-menu button { min-width: 44px; min-height: 44px; padding: 4px 8px; }
+.touch-game .identity { top: max(12px, env(safe-area-inset-top, 0px)); left: max(14px, env(safe-area-inset-left, 0px)); }
+.touch-game .identity h1 { font-size: clamp(12px, 2vw, 22px); margin: 3px 0; }
+.touch-game .identity > p { display: none; }
+.touch-game .location { left: 50%; bottom: 14px; transform: translateX(-50%); text-align: center; }
+.touch-game .location small { font-size: 8px; }
+.touch-game .location p { font-size: 9px; margin-top: 5px; }
+.touch-game .fullscreen { display: none; }
+.touch-game.inspection-open > :is(.identity, .game-menu, .location) { visibility: hidden; }
+.rotation-dialog {
+  position: fixed; inset: 0; margin: auto;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+  padding: 20px 16px 16px;
+  border: 24px solid transparent;
+  border-image: url('/assets/ui/tools.png') 32 / 24px / 0 stretch;
+  background: #19323b; background-clip: padding-box; color: #ebd9ae;
+  text-align: center; overflow-y: auto; overscroll-behavior: contain;
+}
+.rotation-dialog::backdrop { background: rgb(6 16 24 / 92%); }
+.rotation-art { width: 115px; height: 96px; margin: 0 auto 12px; color: #a8d5bc; }
+.rotation-art svg { display: block; width: 100%; height: 100%; }
+.rotation-dialog h2 { font: 700 25px/1.2 Georgia, serif; margin: 0 0 16px; }
+.rotation-dialog p { font-size: 14px; line-height: 1.6; }
+.rotation-dialog .rotation-hint { font-size: 12px; color: #b5cbbf; }
+.portrait-continue { min-height: 48px; padding: 8px; margin-top: 8px; font-size: 12px; }
+@media (any-pointer: coarse) {
+  .game-dialog { max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 12px); width: min(1152px, calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - 16px)); }
+  .game-dialog .section-nav button, .game-dialog .close-panel { min-height: 44px; min-width: 44px; }
+  .game-dialog input, .game-dialog select, .game-dialog textarea { font-size: 16px; }
+}
+@media (orientation: portrait) {
+  .touch-game .location { bottom: 8px; }
+  .touch-controls .joystick { --pad-size: 116px; }
+  .touch-actions { gap: 8px; }
+}
+@media (max-height: 380px) and (orientation: landscape) {
+  .touch-controls .joystick { --pad-size: 94px; }
+  .touch-control-label { display: none; }
+  .touch-actions button { min-height: 64px; min-width: 64px; }
+  .touch-game .location { display: none; }
+}
