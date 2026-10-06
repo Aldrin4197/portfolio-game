@@ -122,7 +122,8 @@ const mailto = computed(() => `mailto:aldrinjay.delosreyes17@gmail.com?subject=$
         <h2 id="panel-heading" tabindex="-1" class="art-region inventory-title">Tools of the trade</h2>
         <button v-for="(tool, index) in pagedTools" :key="tool.name" type="button" class="art-region inventory-slot"
           :class="`inventory-slot-${index}`" :aria-pressed="activeTool?.name === tool.name" @click="selectedTool = tool.name">
-          <PngIcon :name="tool.spriteKey" :mark="tool.mark" /><span>{{ tool.name }}</span>
+          <span class="inventory-slot-art"><PngIcon :name="tool.spriteKey" :mark="tool.mark" /></span>
+          <span class="inventory-slot-label">{{ tool.name }}</span>
         </button>
         <aside v-if="activeTool" class="art-region inventory-detail paper-content" aria-live="polite">
           <PngIcon :name="activeTool.spriteKey" :mark="activeTool.mark" />

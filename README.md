@@ -43,9 +43,9 @@ npm run export:preview
 
 Opening a landmark displays its original poster, journal, inventory, achievement board, or contact desk directly over the dimmed game world. The native dialog provides focus trapping and Escape handling but has no visible background, border, or surrounding container. Navigation and close controls use the same PNG artwork.
 
-Tools, projects, and achievements support search, category filters, and pagination. Add entries to their existing files in `src/data/`; no repainting or fixed total-item limit is required. The original six technology sprites are loaded from `public/assets/ui/tech-stack.png`. Tools without dedicated artwork use text monograms until a matching PNG frame is added. SQL is shared by MySQL and PostgreSQL.
+Tools, projects, and achievements support search, category filters, and pagination. Add entries to their existing files in `src/data/`; no repainting or fixed total-item limit is required. All 15 listed tools now use PNG sprites from `public/assets/ui/tech-stack-v2.png`. The 4 × 4 atlas uses 64-pixel cells; its frame map is `public/assets/ui/tech-stack-v2.json`. The six original sprites are preserved, with eight generated additions including React, MongoDB, Figma, and WordPress. SQL is shared by MySQL and PostgreSQL. Unmapped future entries may still use a text monogram. See [atlas notes and generation prompt](docs/tech-stack-atlas.md).
 
-Desktop layouts preserve each full PNG composition. Narrow screens and short landscape screens reflow content using PNG borders at readable text sizes. Opening a panel pauses gameplay; closing it returns focus and resumes movement. The contact desk prepares an email draft in the visitor’s email app.
+Desktop layouts preserve each full PNG composition. Tool captions have reserved space inside desktop slots; compact inventory layouts place captions below the framed icon, wrapping longer names without crossing the artwork. Narrow screens and short landscape screens reflow content using PNG borders at readable text sizes. Opening a panel pauses gameplay; closing it returns focus and resumes movement. The contact desk prepares an email draft in the visitor’s email app.
 
 The original pack remains in `public/assets/aldrin-game-ui-pack/` as reference material; its procedural renderer is not imported by the game.
 
