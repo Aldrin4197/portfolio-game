@@ -1,16 +1,7 @@
 import { build } from 'vite';
 import { fileURLToPath } from 'node:url';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import {readFile,writeFile} from 'node:fs/promises';
-const root=fileURLToPath(new URL('..', import.meta.url));
-const out=join(tmpdir(), 'portfolio-adventure-preview');
-await build({root,publicDir:false,build:{outDir:out,emptyOutDir:true,assetsInlineLimit:10000000,rollupOptions:{input:root+'/preview.html'}}});
-let html=await readFile(join(out,'preview.html'),'utf8');
-const jsPath=html.match(/<script type="module" crossorigin src="([^"]+)"><\/script>/)[1];
-const cssPath=html.match(/<link rel="stylesheet" crossorigin href="([^"]+)">/)[1];
-const js=await readFile(out+jsPath,'utf8');
-const css=await readFile(out+cssPath,'utf8');
-html=html.replace(/<script type="module" crossorigin src="[^"]+"><\/script>/,()=>'<script type="module">'+js.replaceAll('</script','<\\/script')+'</script>').replace(/<link rel="stylesheet" crossorigin href="[^"]+">/,()=>'<style>'+css+'</style>');
-await writeFile(root+'/docs/previews/playable-preview.html',html);
-console.log('Standalone playable preview saved.');
+
+// Keep PNGs, fonts, and code as ordinary files. Serve this folder over HTTP.
+const root = fileURLToPath(new URL('..', import.meta.url));
+await build({ root, build: { outDir: 'docs/previews/game', emptyOutDir: true, assetsInlineLimit: 0 } });
+console.log('Playable preview saved in docs/previews/game. Run: npx vite preview --outDir docs/previews/game');

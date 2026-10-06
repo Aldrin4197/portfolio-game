@@ -16,7 +16,7 @@ export type SpriteKey =
 
 // Public-folder assets are served from the site root, unprocessed by Vite's
 // module graph, so this is referenced as a plain URL rather than imported.
-export const CHARACTER_SPRITE_URL = "/assets/aldrin-sprites.png";
+export const CHARACTER_SPRITE_URL = `${import.meta.env.BASE_URL}assets/aldrin-sprites.png`;
 export const CHARACTER_SHEET_COLS = 4;
 export const CHARACTER_SHEET_ROWS = 7;
 export const CHARACTER_FRAME_WIDTH = 64;

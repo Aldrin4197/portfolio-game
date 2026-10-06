@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { projectData } from "../data/projectData";
 import { experienceData } from "../data/experienceData";
 import { serviceData } from "../data/servicesData";
@@ -8,36 +8,13 @@ import { hackathonData } from "../data/hackathonData";
 import { toolIcons } from "../data/toolsData";
 import portrait from "../assets/me.webp";
 import cv from "../assets/drin.dlr_CV.pdf";
-import PixelIcon from "./PixelIcon.vue";
+import PngIcon from "./PngIcon.vue";
 const props = defineProps<{ section: string; projectSlug: string | null }>();
 defineEmits<{ project: [slug: string | null] }>();
-const project = computed(() =>
-  projectData.find((item) => item.slug === props.projectSlug),
-);
+const project = computed(() => projectData.find((item) => item.slug === props.projectSlug));
 const experience = [...experienceData].reverse();
 const selectedExperience = ref(0);
 const activeExperience = computed(() => experience[selectedExperience.value]);
-const toolsPerPage = 6;
-const toolPage = ref(0);
-const toolPages = computed(() =>
-  Math.max(1, Math.ceil(toolIcons.length / toolsPerPage)),
-);
-const pagedTools = computed(() =>
-  toolIcons.slice(
-    toolPage.value * toolsPerPage,
-    toolPage.value * toolsPerPage + toolsPerPage,
-  ),
-);
-const selectedTool = ref(toolIcons[0]?.name);
-const activeTool = computed(
-  () =>
-    pagedTools.value.find((tool) => tool.name === selectedTool.value) ??
-    pagedTools.value[0],
-);
-function turnToolPage(delta: number) {
-  toolPage.value += delta;
-  selectedTool.value = pagedTools.value[0]?.name;
-}
 const education = [
   { date: "2023", title: "CS50x: Computer Science", org: "Harvard University’s introductory computer science course." },
   { date: "2014–2019", title: "BS Electronics Engineering", org: "Samar State University" },
@@ -89,120 +66,103 @@ const achievements = computed<Achievement[]>(() => [
     }),
   ),
 ]);
-const selectedAchievement = ref(0);
-const activeAchievement = computed(
-  () => achievements.value[selectedAchievement.value],
-);
+
+const query = ref("");
+const category = ref("");
+const page = ref(0);
+const selectedTool = ref("");
+const selectedAchievement = ref("");
+const collection = computed(() => props.section === "skills" ? toolIcons.map(item => ({ ...item, id: item.name, title: item.name }))
+  : props.section === "achievements" ? achievements.value
+  : projectData.map(item => ({ ...item, category: item.tech[0] || "Other" })));
+const categories = computed(() => [...new Set(collection.value.map(item => item.category))]);
+const filtered = computed(() => collection.value.filter(item =>
+  (!category.value || item.category === category.value) &&
+  JSON.stringify(Object.fromEntries(Object.entries(item).filter(([key]) => ["title", "description", "category", "tech", "meta", "date", "desc"].includes(key)))).toLowerCase().includes(query.value.trim().toLowerCase())));
+const pageSize = computed(() => props.section === "achievements" ? 3 : 6);
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)));
+const pageItems = computed(() => filtered.value.slice(page.value * pageSize.value, (page.value + 1) * pageSize.value));
+const pagedTools = computed(() => toolIcons.filter(item => pageItems.value.some(row => row.id === item.name)));
+const pagedAchievements = computed(() => achievements.value.filter(item => pageItems.value.some(row => row.id === item.id)));
+const pagedProjects = computed(() => projectData.filter(item => pageItems.value.some(row => row.id === item.id)));
+const activeTool = computed(() => pagedTools.value.find(item => item.name === selectedTool.value) || pagedTools.value[0]);
+const activeAchievement = computed(() => pagedAchievements.value.find(item => item.id === selectedAchievement.value) || pagedAchievements.value[0]);
+const isCollection = computed(() => ["skills", "projects", "achievements"].includes(props.section) && !project.value);
+watch([query, category], () => { page.value = 0; });
+watch(() => props.section, () => { query.value = ""; category.value = ""; page.value = 0; });
+watch(totalPages, count => { page.value = Math.min(page.value, count - 1); });
+const sender = ref("");
+const message = ref("");
+const mailto = computed(() => `mailto:aldrinjay.delosreyes17@gmail.com?subject=${encodeURIComponent("Hello from your portfolio")}&body=${encodeURIComponent(`${message.value}\n\n${sender.value}`)}`);
 </script>
 <template>
-  <section v-if="section === 'about'">
-    <div class="illustrated-wrap">
-      <div class="poster illustrated-panel">
-        <div class="illustrated-region poster-region--title">
-          <h2 id="panel-heading" tabindex="-1">Hi, I’m Aldrin.</h2>
-        </div>
-        <div class="illustrated-region poster-region--portrait">
-          <img :src="portrait" alt="Aldrin Jay B. Delos Reyes" />
-        </div>
-        <div class="illustrated-region poster-region--body">
-          <p>Software developer, electronics engineer, and curious tinkerer.</p>
-          <p>
-            At the end of 2022, I shifted my focus to software development.
-            I’m a self-taught developer with a background in Electronics
-            Engineering.
-          </p>
-          <p>
-            I enjoy prototyping, tinkering, and competing in local and
-            regional product and research competitions.
-          </p>
-        </div>
-        <div class="illustrated-region poster-region--footer">
-          <a :href="cv" download="Aldrin_Delos_Reyes_CV.pdf">Download CV ↗</a>
-        </div>
-      </div>
+  <div class="portfolio-content" :class="`section-${section}`">
+    <div v-if="isCollection" class="collection-toolbar png-frame">
+      <label class="collection-search">Search {{ section === 'skills' ? 'tools' : section }}
+        <input v-model="query" type="search" :placeholder="section === 'skills' ? 'Find a tool…' : 'Search the collection…'" />
+      </label>
+      <label>Filter
+        <select v-model="category"><option value="">All categories</option><option v-for="item in categories" :key="item">{{ item }}</option></select>
+      </label>
+      <span class="collection-count" role="status">{{ filtered.length }} {{ filtered.length === 1 ? 'item' : 'items' }}</span>
     </div>
-  </section>
-  <section v-else-if="section === 'skills'">
-    <div class="illustrated-wrap">
-      <div class="tool-case illustrated-panel">
-        <div class="illustrated-region tool-region--title">
-          <h2 id="panel-heading" tabindex="-1">Tools of the trade.</h2>
-        </div>
-        <button
-          type="button"
-          class="illustrated-region tool-region--slot"
-          :class="`tool-region--slot${i + 1}`"
-          v-for="(tool, i) in pagedTools"
-          :key="tool.name"
-          :aria-pressed="tool.name === selectedTool"
-          :aria-label="tool.name"
-          @click="selectedTool = tool.name"
-        >
-          <span
-            v-if="tool.spriteKey"
-            class="tech-icon"
-            :class="`tech-icon--${tool.spriteKey}`"
-            role="img"
-            :aria-label="tool.name"
-          ></span>
-          <PixelIcon
-            v-else
-            :rows="tool.rows"
-            :colors="tool.colors"
-            :label="tool.name"
-            :size="2"
-          />
+    <section v-if="section === 'about'" class="art-panel poster">
+      <h2 id="panel-heading" tabindex="-1" class="art-region poster-title">Meet Aldrin</h2>
+      <div class="art-region poster-photo"><img :src="portrait" alt="Aldrin Jay B. Delos Reyes" /></div>
+      <div class="art-region poster-body">
+        <h3>Aldrin Jay B.<br />Delos Reyes</h3>
+        <p>Software developer, electronics engineer, and curious tinkerer.</p>
+        <p>At the end of 2022, I shifted my focus to software development. I’m a self-taught developer with a background in Electronics Engineering.</p>
+        <p>I enjoy prototyping, tinkering, and competing in local and regional product and research competitions.</p>
+      </div>
+      <a class="art-region poster-link" :href="cv" download="Aldrin_Delos_Reyes_CV.pdf">Download my CV ↗</a>
+    </section>
+    <section v-else-if="section === 'skills'">
+      <div class="art-panel inventory">
+        <h2 id="panel-heading" tabindex="-1" class="art-region inventory-title">Tools of the trade</h2>
+        <button v-for="(tool, index) in pagedTools" :key="tool.name" type="button" class="art-region inventory-slot"
+          :class="`inventory-slot-${index}`" :aria-pressed="activeTool?.name === tool.name" @click="selectedTool = tool.name">
+          <PngIcon :name="tool.spriteKey" :mark="tool.mark" /><span>{{ tool.name }}</span>
         </button>
-        <aside class="illustrated-region tool-region--details" v-if="activeTool">
-          <span
-            v-if="activeTool.spriteKey"
-            class="tech-icon"
-            :class="`tech-icon--${activeTool.spriteKey}`"
-            role="img"
-            :aria-label="activeTool.name"
-          ></span>
-          <PixelIcon
-            v-else
-            :rows="activeTool.rows"
-            :colors="activeTool.colors"
-            :label="activeTool.name"
-            :size="4"
-          />
-          <strong>{{ activeTool.name }}</strong>
+        <aside v-if="activeTool" class="art-region inventory-detail paper-content" aria-live="polite">
+          <PngIcon :name="activeTool.spriteKey" :mark="activeTool.mark" />
+          <small>{{ activeTool.category }}</small><h3>{{ activeTool.name }}</h3><p>{{ activeTool.description }}</p>
         </aside>
-        <div class="illustrated-region tool-region--footer">
-          Page {{ toolPage + 1 }} of {{ toolPages }}
-        </div>
-        <button
-          type="button"
-          class="illustrated-region tool-region--prev"
-          :disabled="toolPage === 0"
-          @click="turnToolPage(-1)"
-          aria-label="Previous tools"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="illustrated-region tool-region--next"
-          :disabled="toolPage === toolPages - 1"
-          @click="turnToolPage(1)"
-          aria-label="Next tools"
-        >
-          ›
+        <p v-else class="art-region inventory-detail paper-content">No tools found. Try another search or category.</p>
+        <p class="art-region inventory-note">Select a tool to inspect</p>
+      </div>
+    </section>
+    <section v-else-if="section === 'experience'" class="art-panel journal">
+      <h2 id="panel-heading" tabindex="-1" class="art-region journal-title">Experience</h2>
+      <div class="art-region journal-entries">
+        <button v-for="(item, index) in experience" :key="`${item.title}-${item.company}`" class="journal-entry" type="button"
+          :aria-pressed="index === selectedExperience" @click="selectedExperience = index">
+          <small>{{ item.duration }}</small><strong>{{ item.title }}</strong><span>{{ item.company }}</span>
         </button>
       </div>
-    </div>
-    <p class="section-hint">Equip the gear I reach for most often.</p>
-    <h3>What I can help you build</h3>
-    <div class="noticeboard">
-      <article class="notice-card" v-for="item in serviceData" :key="item.title">
-        <h3>{{ item.title }}</h3>
-        <p>{{ item.desc }}</p>
+      <article v-if="activeExperience" class="art-region journal-detail paper-content" aria-live="polite">
+        <small>{{ activeExperience.duration }}</small><h3>{{ activeExperience.title }}</h3><strong>{{ activeExperience.company }}</strong><p>{{ activeExperience.description }}</p>
       </article>
-    </div>
-  </section>
-  <section v-else-if="section === 'projects'">
+      <button type="button" class="art-region journal-prev" :disabled="selectedExperience === 0" @click="selectedExperience--" aria-label="Previous role"><span class="sr-only">Previous role</span></button>
+      <button type="button" class="art-region journal-next" :disabled="selectedExperience >= experience.length - 1" @click="selectedExperience++" aria-label="Next role"><span class="sr-only">Next role</span></button>
+    </section>
+    <section v-else-if="section === 'achievements'" class="art-panel achievement-board">
+      <h2 id="panel-heading" tabindex="-1" class="art-region achievement-title">Milestones collected</h2>
+      <button v-for="(item, index) in pagedAchievements" :key="item.id" type="button" class="art-region achievement-pick"
+        :class="`achievement-pick-${index}`" :aria-pressed="activeAchievement?.id === item.id" @click="selectedAchievement = item.id">
+        <span class="medal-icon" :class="`medal-icon--${item.tier}`" aria-hidden="true" />
+        <strong>{{ item.title }}</strong>
+      </button>
+      <div class="art-region achievement-caption"><small>Every step counts.</small><span>{{ filtered.length }} milestones</span></div>
+      <div class="art-region achievement-page"><small>Collection</small><span>{{ page + 1 }} / {{ totalPages }}</span></div>
+      <aside v-if="activeAchievement" class="art-region achievement-detail paper-content" aria-live="polite">
+        <small>{{ activeAchievement.category }} · {{ activeAchievement.date }}</small><h3>{{ activeAchievement.title }}</h3><strong>{{ activeAchievement.meta }}</strong>
+        <p v-if="activeAchievement.description">{{ activeAchievement.description }}</p>
+        <img v-if="activeAchievement.logo" :src="activeAchievement.logo" :alt="activeAchievement.meta" class="achievement-logo" />
+      </aside>
+      <p v-else class="art-region achievement-detail paper-content">No milestones found. Try another search or category.</p>
+    </section>
+    <section v-else-if="section === 'projects'" class="project-collection png-frame">
     <template v-if="projectSlug && project"
       ><button class="text-button" @click="$emit('project', null)">
         ← All projects
@@ -253,153 +213,36 @@ const activeAchievement = computed(
         >
       </div></template
     >
-    <template v-else
-      ><h2 id="panel-heading" tabindex="-1">Pick your next quest.</h2>
-      <p v-if="projectSlug">
-        That project could not be found. Explore another project below.
-      </p>
-      <p v-else>Software, interfaces, and connected hardware.</p>
-      <div class="projects">
-        <button
-          class="cartridge"
-          v-for="item in projectData"
-          :key="item.slug"
-          @click="$emit('project', item.slug)"
-        >
-          <img :src="item.img" alt="" loading="lazy" /><span
-            ><strong>{{ item.title }}</strong
-            ><span>{{ item.desc }}</span
-            ><small>{{ item.tech.join(" · ") }} ↗</small></span
-          >
-        </button>
-      </div></template
-    >
-  </section>
-  <section v-else-if="section === 'experience'">
-    <div class="illustrated-wrap">
-      <div class="journal illustrated-panel">
-        <div class="illustrated-region journal-region--title">
-          <h2 id="panel-heading" tabindex="-1">The journey so far.</h2>
-        </div>
-        <div class="illustrated-region journal-region--entries">
-          <button
-            type="button"
-            class="journal-entry"
-            v-for="(item, index) in experience"
-            :key="item.title"
-            :aria-pressed="index === selectedExperience"
-            @click="selectedExperience = index"
-          >
-            <small>{{ item.duration }}</small>
-            <strong>{{ item.title }}</strong>
-            <span>{{ item.company }}</span>
+
+      <template v-else>
+        <h2 id="panel-heading" tabindex="-1">Project collection</h2>
+        <p v-if="projectSlug">That project could not be found. Explore another project below.</p>
+        <div class="project-grid">
+          <button v-for="item in pagedProjects" :key="item.slug" class="project-card png-frame" @click="$emit('project', item.slug)">
+            <img :src="item.img" alt="" loading="lazy" /><span><strong>{{ item.title }}</strong><small>{{ item.tech.join(' · ') }}</small><span>{{ item.desc }}</span></span>
           </button>
+          <p v-if="!pagedProjects.length">No projects found. Try another search or category.</p>
         </div>
-        <article
-          class="illustrated-region journal-region--details"
-          v-if="activeExperience"
-        >
-          <small>{{ activeExperience.duration }}</small>
-          <h3>{{ activeExperience.title }}</h3>
-          <strong>{{ activeExperience.company }}</strong>
-          <p>{{ activeExperience.description }}</p>
-        </article>
-        <button
-          type="button"
-          class="illustrated-region journal-region--prev"
-          :disabled="selectedExperience === 0"
-          @click="selectedExperience--"
-          aria-label="Previous role"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="illustrated-region journal-region--next"
-          :disabled="selectedExperience === experience.length - 1"
-          @click="selectedExperience++"
-          aria-label="Next role"
-        >
-          ›
-        </button>
+      </template>
+    </section>
+    <section v-else class="art-panel contact-desk">
+      <div class="art-region contact-letter paper-content">
+        <h2 id="panel-heading" tabindex="-1">Leave a message</h2>
+        <p>Have an idea for software, an interface, or connected hardware? I’d love to hear about it.</p>
+        <label>Your name<input v-model="sender" autocomplete="name" maxlength="120" /></label>
+        <label>Your message<textarea v-model="message" rows="3" maxlength="4000" placeholder="Tell me what you’re thinking…" /></label>
+        <a :href="mailto" class="letter-action">Open email draft ↗</a><small>Continue in your email app.</small>
       </div>
+      <div class="art-region contact-address"><strong>To Aldrin</strong><a href="mailto:aldrinjay.delosreyes17@gmail.com">aldrinjay.delosreyes17@gmail.com</a></div>
+    </section>
+    <div v-if="isCollection" class="collection-pagination png-frame">
+      <button :disabled="page === 0" @click="page--" aria-label="Previous page">← Previous</button><span role="status">Page {{ page + 1 }} of {{ totalPages }}</span><button :disabled="page >= totalPages - 1" @click="page++" aria-label="Next page">Next →</button>
     </div>
-    <p class="section-hint">Pick a role, or flip pages with ‹ ›.</p>
-  </section>
-  <section v-else-if="section === 'achievements'">
-    <h2 id="panel-heading" tabindex="-1">Always learning.</h2>
-    <div class="medal-board">
-      <p class="section-hint">A medal case of milestones earned so far — pick one to inspect it.</p>
-      <div class="medal-layout">
-        <div class="medal-grid">
-          <button
-            type="button"
-            class="medal-pick"
-            v-for="(item, index) in achievements"
-            :key="item.id"
-            :aria-pressed="index === selectedAchievement"
-            @click="selectedAchievement = index"
-          >
-            <span
-              class="medal-icon"
-              :class="`medal-icon--${item.tier}`"
-              role="img"
-              :aria-label="`${item.tier} medal`"
-            ></span>
-            <strong>{{ item.title }}</strong>
-            <small>{{ item.category }}</small>
-          </button>
-        </div>
-        <aside class="medal-inspector" v-if="activeAchievement">
-          <img
-            v-if="activeAchievement.logo"
-            :src="activeAchievement.logo"
-            :alt="activeAchievement.title"
-          />
-          <small>{{ activeAchievement.category }} · {{ activeAchievement.date }}</small>
-          <h3>{{ activeAchievement.title }}</h3>
-          <strong>{{ activeAchievement.meta }}</strong>
-          <p v-if="activeAchievement.description">{{ activeAchievement.description }}</p>
-        </aside>
-      </div>
-    </div>
-  </section>
-  <section v-else>
-    <h2 id="panel-heading" tabindex="-1">Let’s build something.</h2>
-    <div class="illustrated-wrap">
-      <div class="portal-panel illustrated-panel">
-        <div class="illustrated-region portal-region--letter">
-          <p>
-            Have an idea for software, an interface, or connected hardware?
-            I’d love to hear about it.
-          </p>
-          <a href="mailto:aldrinjay.delosreyes17@gmail.com"
-            >Send me an email ↗</a
-          >
-          <p class="email">aldrinjay.delosreyes17@gmail.com</p>
-          <div class="links">
-            <a
-              href="https://github.com/Aldrin4197"
-              target="_blank"
-              rel="noreferrer"
-              >GitHub ↗</a
-            ><a
-              href="https://www.linkedin.com/in/aldrin-jay-delos-reyes-559817267/"
-              target="_blank"
-              rel="noreferrer"
-              >LinkedIn ↗</a
-            ><a
-              href="https://www.facebook.com/drindlr"
-              target="_blank"
-              rel="noreferrer"
-              >Facebook ↗</a
-            >
-          </div>
-        </div>
-        <div class="illustrated-region portal-region--address">
-          <small>Find me online</small>
-        </div>
-      </div>
-    </div>
-  </section>
+      <details v-if="section === 'skills'" class="services png-frame"><summary>What I can help you build</summary>
+        <div class="service-grid"><article v-for="item in serviceData" :key="item.title"><h3>{{ item.title }}</h3><p>{{ item.desc }}</p></article></div>
+      </details>
+    <nav v-if="section === 'contact'" class="contact-links png-frame" aria-label="Find Aldrin online">
+      <a href="https://github.com/Aldrin4197" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/aldrin-jay-delos-reyes-559817267/" target="_blank" rel="noreferrer">LinkedIn ↗</a><a href="https://www.facebook.com/drindlr" target="_blank" rel="noreferrer">Facebook ↗</a>
+    </nav>
+  </div>
 </template>

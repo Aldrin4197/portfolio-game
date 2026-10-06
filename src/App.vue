@@ -47,14 +47,17 @@ const panelTitle = computed(() =>
       : stops[panel.value].name,
 );
 function show(value: number | "map" | "help") {
-  returnFocus =
-    document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
+  if (!modal.value?.open) {
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
   panel.value = value;
   selectedProject.value = null;
   world?.pause(true);
-  modal.value?.showModal();
+  if (!modal.value?.open) modal.value?.showModal();
+  nextTick(() => {
+    modal.value?.scrollTo(0, 0);
+    modal.value?.querySelector<HTMLElement>("#panel-heading")?.focus({ preventScroll: true });
+  });
 }
 function explore() {
   if (nearby.value >= 0) show(nearby.value);
@@ -240,17 +243,17 @@ onBeforeUnmount(() => {
     <dialog
       ref="modal"
       class="game-dialog"
+      :class="{ 'utility-dialog': typeof panel !== 'number' }"
       aria-labelledby="panel-heading"
       @close="resume"
     >
       <div class="panel-top">
-        <span>{{
-          typeof panel === "number"
-            ? `AREA ${stops[panel].number}`
-            : "ALDRIN’S WORLD"
-        }}</span
-        ><button autofocus @click="close">Return to game ×</button>
+        <nav v-if="typeof panel === 'number'" class="section-nav" aria-label="Portfolio sections">
+          <button v-for="(destination, index) in stops" :key="destination.id" :aria-current="panel === index ? 'page' : undefined" @click="show(index)">{{ destination.id === 'skills' ? 'Tools' : destination.label }}</button>
+        </nav>
+        <button class="close-panel" autofocus @click="close" aria-label="Return to game"><span aria-hidden="true">×</span><span class="close-label">Esc</span></button>
       </div>
+      <div v-if="typeof panel !== 'number'" class="utility-paper png-frame">
       <template v-if="panel === 'map'"
         ><h2 id="panel-heading" tabindex="-1">{{ panelTitle }}</h2>
         <p>Travel to a location and explore what’s inside.</p>
@@ -285,8 +288,9 @@ onBeforeUnmount(() => {
           Landscape gives you the largest view.
         </p></template
       >
+      </div>
       <PortfolioPanel
-        v-else
+        v-if="typeof panel === 'number'"
         :section="stops[panel].id"
         :project-slug="selectedProject"
         @project="selectProject"
